@@ -1,4 +1,4 @@
-# PHP-IOT-server
+# PHP-IoT-server
 Used for storing IoT-data in Integrated Smart Systems (ISS) module. Allows you to store and retrieve variables in an SQL database via HTTP requests.
 
 ## Requirements

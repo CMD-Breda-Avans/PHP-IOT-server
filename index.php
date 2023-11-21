@@ -1,7 +1,6 @@
 <?php
-require_once 'config.php';
-
 // Create a connection to the database
+require_once 'config.php';
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 // Check the connection
@@ -26,21 +25,35 @@ if ($token && !preg_match('/^[a-zA-Z0-9]+$/', $token)) {
 
 // GET mode: Retrieve the value for the token
 if ($mode === 'get') {
-	$sql = "SELECT value FROM ". TABLE_NAME ." WHERE token = ?";
+	if (!isset($_GET['token'])) {
+		die("Token parameter is required for 'get' mode.");
+	}
+	$token = strtolower($_GET['token']); // ignore case, convert to lowercase
+
+	$sql = "SELECT value FROM ".TABLE_NAME." WHERE token = ?";
 	$stmt = $conn->prepare($sql);
 	$stmt->bind_param("s", $token);
 	$stmt->execute();
 
-	$result = $stmt->get_result();
+	// Bind the result variable
+	$stmt->bind_result($resultValue);
 
-	if ($result->num_rows > 0) {
-		$row = $result->fetch_assoc();
-		// echo "Retrieved value for token \"$token\": " . $row['value'];
+	// Fetch the result
+	if ($stmt->fetch()) {
+		$response = [
+			'token' => $token,
+			'value' => $resultValue
+		];
+		// print_r($response);
 		// header('Content-Type: application/json');
-		echo $row['value'];
+		// echo json_encode($response);
+		echo $response["value"];
 
 	} else {
-		die("Error: Token \"$token\" not found.");
+		$response = ['error' => 'Token not found'];
+		// header('Content-Type: application/json');
+		// echo $response;
+		echo $response["error"];
 	}
 }
 // SET mode: Set the value for the token
@@ -49,14 +62,23 @@ else if ($mode === 'set') {
 		die("Both token and value parameters are required for 'set' mode.");
 	}
 
-	$sql = "SELECT * FROM ". TABLE_NAME ." WHERE token = ?";
+	$token = strtolower($_GET['token']); // ignore case, convert to lowercase
+
+	$sql = "SELECT value FROM ".TABLE_NAME." WHERE token = ?";
 	$stmt = $conn->prepare($sql);
 	$stmt->bind_param("s", $token);
 	$stmt->execute();
 
-	$result = $stmt->get_result();
+	// Bind the result variable
+	$stmt->bind_result($resultValue);
 
-	if ($result->num_rows > 0) {
+	// Fetch the result
+	$stmt->fetch();
+
+	// Free it for next db request
+	$stmt->free_result();
+
+	if ($resultValue !== null) {
 		// If token exists, update the value
 		$sql = "UPDATE ". TABLE_NAME ." SET value = ? WHERE token = ?";
 		$stmt = $conn->prepare($sql);
@@ -82,11 +104,4 @@ else if ($mode === 'set') {
 		}
 	}
 }
-else {
-	die("Mode parameter is required, use 'get' or 'set'.");
-}
-
-// Close the database connection
-$conn->close();
-
 ?>

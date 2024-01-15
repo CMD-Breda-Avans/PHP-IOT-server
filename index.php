@@ -8,9 +8,9 @@ if ($conn->connect_error) {
 	die("Connection failed: " . $conn->connect_error);
 }
 
-// Detect mode ( get || set )
+// Detect mode ( get || send )
 if (!isset($_GET['mode'])) {
-	die("Mode parameter is required, use 'get' or 'set'.");
+	die("Mode parameter is required, use 'get' or 'send'.");
 }
 $mode = strtolower($_GET['mode']); // ignore case, convert to lowercase
 
@@ -60,9 +60,9 @@ if ($mode === 'get') {
 	}
 }
 // SET mode: Set the value for the token
-else if ($mode === 'set') {
+else if ($mode === 'send') {
 	if (!isset($_GET['token']) || !isset($_GET['value'])) {
-		die("Both token and value parameters are required for 'set' mode.");
+		die("Both token and value parameters are required for 'send' mode.");
 	}
 
 	$token = strtolower($_GET['token']); // ignore case, convert to lowercase
@@ -106,5 +106,7 @@ else if ($mode === 'set') {
 			echo "Error: " . $conn->error;
 		}
 	}
+} else {
+	die("Invalid mode parameter, use 'get' or 'send'.");
 }
 ?>

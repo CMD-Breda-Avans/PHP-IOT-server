@@ -3,5 +3,5 @@ RewriteEngine On
 # Route /get/abc123 requests to iot/index.php with appropriate parameters
 RewriteRule ^get/([^/]+)/?$ /iot/index.php?mode=get&token=$1 [QSA,L]
 
-# Route /set/abc123/helloworld requests to iot/index.php with appropriate parameters
-RewriteRule ^set/([^/]+)/([^/]+)/?$ /iot/index.php?mode=set&token=$1&value=$2 [QSA,L]
+# Route /send/abc123/helloworld requests to iot/index.php with appropriate parameters
+RewriteRule ^send/([^/]+)/([^/]+)/?$ /iot/index.php?mode=send&token=$1&value=$2 [QSA,L]

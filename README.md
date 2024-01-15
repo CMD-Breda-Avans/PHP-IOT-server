@@ -17,8 +17,8 @@ Used for storing IoT-data in Integrated Smart Systems (ISS) module. Allows you t
 ## Usage
 The server accepts HTTP requests with the following format:
 
-- To store a variable: `https://yourserver.com/set/token/value` (Use mode 'set')
-    - Example: `https://yourserver.com/set/abc123/0.001`
+- To store a variable: `https://yourserver.com/send/token/value` (Use mode 'send')
+    - Example: `https://yourserver.com/send/abc123/0.001`
 
 - To retrieve a variable: `https://yourserver.com/get/token` (Use mode 'get')
     - Example: `https://yourserver.com/get/abc`

@@ -14,6 +14,9 @@ if (!isset($_GET['mode'])) {
 }
 $mode = strtolower($_GET['mode']); // ignore case, convert to lowercase
 
+// Allow cross-origin requests
+header("Access-Control-Allow-Origin: *");
+
 // Validation for token and value (Add these checks before using them in queries)
 $token = isset($_GET['token']) ? strtolower($_GET['token']) : null;
 $value = isset($_GET['value']) ? $_GET['value'] : null;

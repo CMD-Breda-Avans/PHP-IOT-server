@@ -116,4 +116,5 @@ else if ($mode === 'send') {
 } else {
 	die("Invalid mode parameter, use 'get' or 'send'.");
 }
+// V TEST
 ?>

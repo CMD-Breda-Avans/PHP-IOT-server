@@ -1,6 +1,9 @@
 <?php
+ob_start(); // Enable output buffering
+
+require_once "config.php";
+
 // Create a connection to the database
-require_once 'config.php';
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
 // Check the connection
@@ -14,12 +17,17 @@ if (!isset($_GET['mode'])) {
 }
 $mode = strtolower($_GET['mode']); // ignore case, convert to lowercase
 
-// Allow cross-origin requests
-header("Access-Control-Allow-Origin: *");
+// Set correct headers for response
+http_response_code(200); // Set the status code to 200 (OK)
+header("Access-Control-Allow-Origin: *"); // Allow cross-origin requests
+header('Content-Type: text/plain'); // Set the type of response to plain text
+// header('Content-Type: application/json'); // Set the type of response to JSON
 
 // Validation for token and value (Add these checks before using them in queries)
 $token = isset($_GET['token']) ? strtolower($_GET['token']) : null;
 $value = isset($_GET['value']) ? $_GET['value'] : null;
+
+ob_end_clean(); // Clean the output buffer after ob_start(), ensures no extra whitespace etc. is sent
 
 // Token validation: Allowing only alphanumeric characters
 if ($token && !preg_match('/^[a-zA-Z0-9]+$/', $token)) {
@@ -47,15 +55,12 @@ if ($mode === 'get') {
 			'token' => $token,
 			'value' => $resultValue
 		];
-		// print_r($response);
-		// header('Content-Type: application/json');
-		// echo json_encode($response);
+
 		echo $response["value"];
+		echo "\n";
 
 	} else {
 		$response = ['error' => 'Token not found'];
-		// header('Content-Type: application/json');
-		// echo $response;
 		echo $response["error"];
 	}
 }
@@ -87,8 +92,9 @@ else if ($mode === 'send') {
 		$stmt = $conn->prepare($sql);
 		$stmt->bind_param("ss", $value, $token);
 		if ($stmt->execute()) {
-			// header('Content-Type: application/json');
 			echo $value;
+			echo "\n";
+
 		} else {
 			echo "Error updating record: " . $conn->error;
 		}
@@ -100,8 +106,9 @@ else if ($mode === 'send') {
 		$stmt->bind_param("ss", $token, $value);
 		if ($stmt->execute()) {
 			// echo "Stored token \"$token\" with value \"$value\"";
-			// header('Content-Type: application/json');
 			echo $value;
+			echo "\n";
+
 		} else {
 			echo "Error: " . $conn->error;
 		}

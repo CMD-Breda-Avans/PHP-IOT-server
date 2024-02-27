@@ -1,8 +1,13 @@
 <?php
 ob_start(); // Enable output buffering
 
+/* Load settings */
 require_once "config.php";
 
+/* Init body */
+$body = "";
+
+/* Init database connection */
 // Create a connection to the database
 $conn = new mysqli(DB_HOST, DB_USER, DB_PASSWORD, DB_NAME);
 
@@ -12,34 +17,33 @@ if ($conn->connect_error) {
 }
 
 // Detect mode ( get || send )
-if (!isset($_GET['mode'])) {
+if (!isset($_GET["mode"])) {
 	die("Mode parameter is required, use 'get' or 'send'.");
 }
-$mode = strtolower($_GET['mode']); // ignore case, convert to lowercase
-
-// Set correct headers for response
-http_response_code(200); // Set the status code to 200 (OK)
-header("Access-Control-Allow-Origin: *"); // Allow cross-origin requests
-header('Content-Type: text/plain'); // Set the type of response to plain text
-// header('Content-Type: application/json'); // Set the type of response to JSON
+$mode = strtolower($_GET["mode"]); // ignore case, convert to lowercase
 
 // Validation for token and value (Add these checks before using them in queries)
-$token = isset($_GET['token']) ? strtolower($_GET['token']) : null;
-$value = isset($_GET['value']) ? $_GET['value'] : null;
+$token = isset($_GET["token"]) ? strtolower($_GET["token"]) : null;
+$value = isset($_GET["value"]) ? $_GET["value"] : null;
 
-ob_end_clean(); // Clean the output buffer after ob_start(), ensures no extra whitespace etc. is sent
+// Check if the entered token is in the allowed tokens array
+if (!in_array($token, $allowedTokens)) {
+	die("Error: Invalid token");
+}
 
-// Token validation: Allowing only alphanumeric characters
-if ($token && !preg_match('/^[a-zA-Z0-9]+$/', $token)) {
-	die("Invalid token format.");
+// Check for data type
+$type = isset($_GET["type"]) ? strtolower($_GET["type"]) : "text"; // ignore case, convert to lowercase
+$typeString = "text/plain"; // assume text
+if ($type == "json") { // check for json
+	$typeString = "application/json";
 }
 
 // GET mode: Retrieve the value for the token
-if ($mode === 'get') {
-	if (!isset($_GET['token'])) {
+if ($mode === "get") {
+	if (!isset($_GET["token"])) {
 		die("Token parameter is required for 'get' mode.");
 	}
-	$token = strtolower($_GET['token']); // ignore case, convert to lowercase
+	$token = strtolower($_GET["token"]); // ignore case, convert to lowercase
 
 	$sql = "SELECT value FROM ".TABLE_NAME." WHERE token = ?";
 	$stmt = $conn->prepare($sql);
@@ -52,25 +56,25 @@ if ($mode === 'get') {
 	// Fetch the result
 	if ($stmt->fetch()) {
 		$response = [
-			'token' => $token,
-			'value' => $resultValue
+			"token" => $token,
+			"value" => $resultValue
 		];
 
-		echo $response["value"];
-		echo "\n";
+		$body = $response["value"];
+		// echo "\n";
 
 	} else {
-		$response = ['error' => 'Token not found'];
-		echo $response["error"];
+		$response = ["error" => "Token not found"];
+		$body = $response["error"];
 	}
 }
 // SET mode: Set the value for the token
-else if ($mode === 'send') {
-	if (!isset($_GET['token']) || !isset($_GET['value'])) {
+else if ($mode === "send") {
+	if (!isset($_GET["token"]) || !isset($_GET["value"])) {
 		die("Both token and value parameters are required for 'send' mode.");
 	}
 
-	$token = strtolower($_GET['token']); // ignore case, convert to lowercase
+	$token = strtolower($_GET["token"]); // ignore case, convert to lowercase
 
 	$sql = "SELECT value FROM ".TABLE_NAME." WHERE token = ?";
 	$stmt = $conn->prepare($sql);
@@ -92,11 +96,10 @@ else if ($mode === 'send') {
 		$stmt = $conn->prepare($sql);
 		$stmt->bind_param("ss", $value, $token);
 		if ($stmt->execute()) {
-			echo $value;
-			echo "\n";
-
+			$body = $value;
+			// echo "\n";
 		} else {
-			echo "Error updating record: " . $conn->error;
+			die("Error updating record: " . $conn->error);
 		}
 
 	} else {
@@ -106,14 +109,29 @@ else if ($mode === 'send') {
 		$stmt->bind_param("ss", $token, $value);
 		if ($stmt->execute()) {
 			// echo "Stored token \"$token\" with value \"$value\"";
-			echo $value;
-			echo "\n";
+			$body = $value;
+			// echo "\n";
 
 		} else {
-			echo "Error: " . $conn->error;
+			die("Error: " . $conn->error);
 		}
 	}
 } else {
 	die("Invalid mode parameter, use 'get' or 'send'.");
 }
+// Close the database connection
+$conn->close();
+
+/* Construct output */
+
+// Set correct headers for response
+http_response_code(200); // Set the status code to 200 (OK)
+header("Access-Control-Allow-Origin: *"); // Allow cross-origin requests
+header("Content-Length: " . strlen($body) ); // Calculate length and add to headers
+header("Content-Type: " . $typeString); // Set the type of response to plain text or json
+
+ob_end_flush(); // collects all output in a buffer. reduces extra characters
+echo $body;
+
+
 ?>

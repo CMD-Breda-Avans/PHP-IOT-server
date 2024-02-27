@@ -1,5 +1,5 @@
 <?php
-ob_start(); // Enable output buffering
+ob_start(); // Enable output buffering ghjghkgh
 
 /* Load settings */
 require_once "config.php";
